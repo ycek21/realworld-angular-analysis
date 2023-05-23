@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer'
 import { startFlow } from 'lighthouse'
 
 async function captureReport () {
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
 
   const flow = await startFlow(page,
@@ -11,7 +11,17 @@ async function captureReport () {
     {
       config: {
         extends: 'lighthouse:default',
-        settings: {throttlingMethod: 'provided'}
+        settings: {
+          formFactor: 'desktop',
+          screenEmulation: {
+            mobile: false,
+            width: 1340,
+            height: 1080,
+            deviceScaleFactor: 1.75,
+            disabled: false
+          },
+          throttling: { cpuSlowdownMultiplier: 1, rttMs: 40, throughputKbps: 10240 }
+        }
       }
     })
   await flow.navigate('http://localhost:4200')
