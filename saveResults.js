@@ -8,7 +8,7 @@ function saveAggregatedJson (dirToSave, aggregatedData) {
   fs.writeFileSync(dirToSave, jsonToSave)
 }
 
-export default async function saveResultsInJson (testVariant, index) {
+export async function saveResultsInJson (testVariant, index) {
   const dirToSave = defaultDir + `/${testVariant}/`
   const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
   const jsonRawData = fs.readFileSync(auditJsonFileLocation)
@@ -75,4 +75,36 @@ export default async function saveResultsInJson (testVariant, index) {
     }
     saveAggregatedJson(fileDir, dataToSave)
   }
+}
+
+export async function calculateMetrics (testVariant) {
+  const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_aggregated_results.json`
+  const jsonRawAggregatedData = fs.readFileSync(aggregatedFileLocation)
+  const jsonToReadFrom = JSON.parse(jsonRawAggregatedData)
+
+  //   console.log('jsonToReadFrom :>> ', jsonToReadFrom)
+
+  console.log('jsonToReadFrom[cold-load] :>> ', jsonToReadFrom['cold-load'])
+
+  const results = {
+    'cold-load': {
+      'first-contentful-paint': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['first-contentful-paint']),
+        numericUnit: jsonToReadFrom['cold-load']['first-contentful-paint'][0].numericUnit
+      }
+    }
+  }
+
+  console.log('results :>> ', results)
+}
+
+function calculateAverage (metricsArray) {
+  let sum = 0
+  const sumFunction = (a, b) => a + b
+
+  metricsArray.forEach((metric) => {
+    sum = sumFunction(sum, metric.numericValue)
+  })
+
+  return (sum / metricsArray.length)
 }
