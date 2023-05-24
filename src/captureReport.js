@@ -21,7 +21,8 @@ const browserConfig = {
 
 export default async function captureReport (url, testVariant, index) {
   const browser = await puppeteer.launch({ headless: false })
-  const page = await browser.newPage()
+  const incognito = await browser.createIncognitoBrowserContext()
+  const page = await incognito.newPage()
 
   // cold navigation
   const flow = await startFlow(page, browserConfig)

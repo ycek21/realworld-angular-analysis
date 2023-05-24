@@ -1,9 +1,13 @@
-import fs from 'fs'
 import captureReport from './captureReport.js'
 import { saveResultsInJson, calculateMetrics } from './saveResults.js'
 
-// saveResultsInJson('initial_version', 3)
+async function generateReports (version) {
+  for (let index = 0; index < 10; index++) {
+    await captureReport('http://localhost:4200', version, index)
+    await saveResultsInJson(version, index)
+  }
 
-// captureReport('http://localhost:4200', 'initial_version', 3)
+  calculateMetrics(version)
+}
 
-calculateMetrics('initial_version')
+generateReports('initial_version_home_page')
