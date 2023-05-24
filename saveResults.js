@@ -2,12 +2,6 @@ import fs from 'fs'
 
 const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
 
-function saveAggregatedJson (dirToSave, aggregatedData) {
-  const jsonToSave = JSON.stringify(aggregatedData)
-
-  fs.writeFileSync(dirToSave, jsonToSave)
-}
-
 export async function saveResultsInJson (testVariant, index) {
   const dirToSave = defaultDir + `/${testVariant}/`
   const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
@@ -139,7 +133,20 @@ export async function calculateMetrics (testVariant) {
     }
   }
 
-  return results
+  saveCalculatedMetrics(testVariant, results)
+}
+
+function saveAggregatedJson (dirToSave, aggregatedData) {
+  const jsonToSave = JSON.stringify(aggregatedData)
+
+  fs.writeFileSync(dirToSave, jsonToSave)
+}
+
+function saveCalculatedMetrics (testVariant, results) {
+  const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_calculated_results.json`
+
+  const json = JSON.stringify(results)
+  fs.writeFileSync(aggregatedFileLocation, json)
 }
 
 function calculateAverage (metricArray) {
