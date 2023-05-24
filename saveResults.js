@@ -1,25 +1,25 @@
 import fs from 'fs'
 
+const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
+
+function saveAggregatedJson (dirToSave, aggregatedData) {
+  const jsonToSave = JSON.stringify(aggregatedData)
+
+  fs.writeFileSync(dirToSave, jsonToSave)
+}
+
 export default async function saveResultsInJson (testVariant, index) {
-  const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
   const dirToSave = defaultDir + `/${testVariant}/`
-
-  if (!fs.existsSync(dirToSave)) {
-    fs.mkdirSync(dirToSave, { recursive: true })
-  }
-
-  const jsonFileLocation = dirToSave + `${testVariant}_${index}.json`
-
-  const jsonRawData = fs.readFileSync(jsonFileLocation)
-
+  const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
+  const jsonRawData = fs.readFileSync(auditJsonFileLocation)
   const json = JSON.parse(jsonRawData)
 
   const fileDir = dirToSave + `${testVariant}_aggregated_results.json`
 
   if (fs.existsSync(fileDir)) {
     const aggregatedJsonRawData = fs.readFileSync(fileDir)
-
     const aggregatedJson = JSON.parse(aggregatedJsonRawData)
+
     aggregatedJson['cold-load']['first-contentful-paint'].push(json.steps[0].lhr.audits['first-contentful-paint'])
     aggregatedJson['cold-load']['largest-contentful-paint'].push(json.steps[0].lhr.audits['largest-contentful-paint'])
     aggregatedJson['cold-load']['speed-index'].push(json.steps[0].lhr.audits['speed-index'])
@@ -42,10 +42,10 @@ export default async function saveResultsInJson (testVariant, index) {
     aggregatedJson['warm-load'].seo.push(json.steps[1].lhr.categories.seo.score)
     aggregatedJson['warm-load'].pwa.push(json.steps[1].lhr.categories.pwa.score)
 
-    const jsonToSave = JSON.stringify(aggregatedJson)
-
-    fs.writeFileSync(fileDir, jsonToSave)
+    saveAggregatedJson(fileDir, aggregatedJson)
   } else {
+    fs.mkdirSync(dirToSave, { recursive: true })
+
     const dataToSave = {
       'cold-load': {
         'first-contentful-paint': [json.steps[0].lhr.audits['first-contentful-paint']],
@@ -73,8 +73,6 @@ export default async function saveResultsInJson (testVariant, index) {
       }
 
     }
-    const jsonToSave = JSON.stringify(dataToSave)
-
-    fs.writeFileSync(fileDir, jsonToSave)
+    saveAggregatedJson(fileDir, dataToSave)
   }
 }
