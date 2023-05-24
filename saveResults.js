@@ -82,29 +82,87 @@ export async function calculateMetrics (testVariant) {
   const jsonRawAggregatedData = fs.readFileSync(aggregatedFileLocation)
   const jsonToReadFrom = JSON.parse(jsonRawAggregatedData)
 
-  //   console.log('jsonToReadFrom :>> ', jsonToReadFrom)
-
-  console.log('jsonToReadFrom[cold-load] :>> ', jsonToReadFrom['cold-load'])
-
   const results = {
     'cold-load': {
       'first-contentful-paint': {
         average: calculateAverage(jsonToReadFrom['cold-load']['first-contentful-paint']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['first-contentful-paint']),
         numericUnit: jsonToReadFrom['cold-load']['first-contentful-paint'][0].numericUnit
+      },
+      'largest-contentful-paint': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['largest-contentful-paint']),
+        numericUnit: jsonToReadFrom['cold-load']['largest-contentful-paint'][0].numericUnit
+      },
+      'speed-index': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['speed-index']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['speed-index']),
+        numericUnit: jsonToReadFrom['cold-load']['speed-index'][0].numericUnit
+      },
+      'total-blocking-time': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['total-blocking-time']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['total-blocking-time']),
+        numericUnit: jsonToReadFrom['cold-load']['total-blocking-time'][0].numericUnit
+      },
+      'cumulative-layout-shift': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['cumulative-layout-shift']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['cumulative-layout-shift']),
+        numericUnit: jsonToReadFrom['cold-load']['cumulative-layout-shift'][0].numericUnit
+      }
+    },
+    'warm-load': {
+      'first-contentful-paint': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['first-contentful-paint']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['first-contentful-paint']),
+        numericUnit: jsonToReadFrom['warm-load']['first-contentful-paint'][0].numericUnit
+      },
+      'largest-contentful-paint': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['largest-contentful-paint']),
+        numericUnit: jsonToReadFrom['warm-load']['largest-contentful-paint'][0].numericUnit
+      },
+      'speed-index': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['speed-index']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['speed-index']),
+        numericUnit: jsonToReadFrom['warm-load']['speed-index'][0].numericUnit
+      },
+      'total-blocking-time': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['total-blocking-time']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['total-blocking-time']),
+        numericUnit: jsonToReadFrom['warm-load']['total-blocking-time'][0].numericUnit
+      },
+      'cumulative-layout-shift': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['cumulative-layout-shift']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['cumulative-layout-shift']),
+        numericUnit: jsonToReadFrom['warm-load']['cumulative-layout-shift'][0].numericUnit
       }
     }
   }
 
-  console.log('results :>> ', results)
+  return results
 }
 
-function calculateAverage (metricsArray) {
+function calculateAverage (metricArray) {
   let sum = 0
   const sumFunction = (a, b) => a + b
 
-  metricsArray.forEach((metric) => {
+  metricArray.forEach((metric) => {
     sum = sumFunction(sum, metric.numericValue)
   })
 
-  return (sum / metricsArray.length)
+  return (sum / metricArray.length)
+}
+
+function calculateMedian (metricArray) {
+  if (metricArray.length === 0) throw new Error('No inputs')
+
+  metricArray.sort(function (a, b) {
+    return a.numericValue - b.numericValue
+  })
+
+  const half = Math.floor(metricArray.length / 2)
+
+  if (metricArray.length % 2) { return metricArray[half].numericValue }
+
+  return (metricArray[half - 1].numericValue + metricArray[half].numericValue) / 2.0
 }
