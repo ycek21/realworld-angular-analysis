@@ -79,57 +79,67 @@ export async function calculateMetrics (testVariant) {
   const results = {
     'cold-load': {
       'first-contentful-paint': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['first-contentful-paint']),
-        median: calculateMedian(jsonToReadFrom['cold-load']['first-contentful-paint']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['first-contentful-paint'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['cold-load']['first-contentful-paint'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['cold-load']['first-contentful-paint'][0].numericUnit
       },
       'largest-contentful-paint': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint']),
-        median: calculateMedian(jsonToReadFrom['cold-load']['largest-contentful-paint']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['cold-load']['largest-contentful-paint'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['cold-load']['largest-contentful-paint'][0].numericUnit
       },
       'speed-index': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['speed-index']),
-        median: calculateMedian(jsonToReadFrom['cold-load']['speed-index']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['speed-index'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['cold-load']['speed-index'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['cold-load']['speed-index'][0].numericUnit
       },
       'total-blocking-time': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['total-blocking-time']),
-        median: calculateMedian(jsonToReadFrom['cold-load']['total-blocking-time']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['total-blocking-time'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['cold-load']['total-blocking-time'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['cold-load']['total-blocking-time'][0].numericUnit
       },
       'cumulative-layout-shift': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['cumulative-layout-shift']),
-        median: calculateMedian(jsonToReadFrom['cold-load']['cumulative-layout-shift']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['cumulative-layout-shift'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['cold-load']['cumulative-layout-shift'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['cold-load']['cumulative-layout-shift'][0].numericUnit
-      }
+      },
+      performance: calculateAverage(jsonToReadFrom['cold-load'].performance),
+      accessibility: calculateAverage(jsonToReadFrom['cold-load'].accessibility),
+      'best-practices': calculateAverage(jsonToReadFrom['cold-load']['best-practices']),
+      seo: calculateAverage(jsonToReadFrom['cold-load'].seo),
+      pwa: calculateAverage(jsonToReadFrom['cold-load'].pwa)
     },
     'warm-load': {
       'first-contentful-paint': {
-        average: calculateAverage(jsonToReadFrom['warm-load']['first-contentful-paint']),
-        median: calculateMedian(jsonToReadFrom['warm-load']['first-contentful-paint']),
+        average: calculateAverage(jsonToReadFrom['warm-load']['first-contentful-paint'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['warm-load']['first-contentful-paint'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['warm-load']['first-contentful-paint'][0].numericUnit
       },
       'largest-contentful-paint': {
-        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint']),
-        median: calculateMedian(jsonToReadFrom['warm-load']['largest-contentful-paint']),
+        average: calculateAverage(jsonToReadFrom['cold-load']['largest-contentful-paint'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['warm-load']['largest-contentful-paint'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['warm-load']['largest-contentful-paint'][0].numericUnit
       },
       'speed-index': {
-        average: calculateAverage(jsonToReadFrom['warm-load']['speed-index']),
-        median: calculateMedian(jsonToReadFrom['warm-load']['speed-index']),
+        average: calculateAverage(jsonToReadFrom['warm-load']['speed-index'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['warm-load']['speed-index'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['warm-load']['speed-index'][0].numericUnit
       },
       'total-blocking-time': {
-        average: calculateAverage(jsonToReadFrom['warm-load']['total-blocking-time']),
-        median: calculateMedian(jsonToReadFrom['warm-load']['total-blocking-time']),
+        average: calculateAverage(jsonToReadFrom['warm-load']['total-blocking-time'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['warm-load']['total-blocking-time'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['warm-load']['total-blocking-time'][0].numericUnit
       },
       'cumulative-layout-shift': {
-        average: calculateAverage(jsonToReadFrom['warm-load']['cumulative-layout-shift']),
-        median: calculateMedian(jsonToReadFrom['warm-load']['cumulative-layout-shift']),
+        average: calculateAverage(jsonToReadFrom['warm-load']['cumulative-layout-shift'].map(x => x.numericValue)),
+        median: calculateMedian(jsonToReadFrom['warm-load']['cumulative-layout-shift'].map(x => x.numericValue)),
         numericUnit: jsonToReadFrom['warm-load']['cumulative-layout-shift'][0].numericUnit
-      }
+      },
+      performance: calculateAverage(jsonToReadFrom['warm-load'].performance),
+      accessibility: calculateAverage(jsonToReadFrom['warm-load'].accessibility),
+      'best-practices': calculateAverage(jsonToReadFrom['warm-load']['best-practices']),
+      seo: calculateAverage(jsonToReadFrom['warm-load'].seo),
+      pwa: calculateAverage(jsonToReadFrom['warm-load'].pwa)
     }
   }
 
@@ -154,7 +164,7 @@ function calculateAverage (metricArray) {
   const sumFunction = (a, b) => a + b
 
   metricArray.forEach((metric) => {
-    sum = sumFunction(sum, metric.numericValue)
+    sum = sumFunction(sum, metric)
   })
 
   return (sum / metricArray.length)
@@ -164,12 +174,12 @@ function calculateMedian (metricArray) {
   if (metricArray.length === 0) throw new Error('No inputs')
 
   metricArray.sort(function (a, b) {
-    return a.numericValue - b.numericValue
+    return a - b
   })
 
   const half = Math.floor(metricArray.length / 2)
 
-  if (metricArray.length % 2) { return metricArray[half].numericValue }
+  if (metricArray.length % 2) { return metricArray[half] }
 
-  return (metricArray[half - 1].numericValue + metricArray[half].numericValue) / 2.0
+  return (metricArray[half - 1] + metricArray[half]) / 2.0
 }
