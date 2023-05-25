@@ -27,9 +27,16 @@ export default async function captureReport (url, testVariant, count) {
 
   let index = 0
 
+  await page.goto('http://localhost:4200/')
+  await page.evaluate(() => {
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImphY2VrQGphY2VrLnBsIiwidXNlcm5hbWUiOiJqYWNlazIiLCJpYXQiOjE2ODUwMTUxNjUsImV4cCI6MTY5MDE5OTE2NX0.dR3KaoUw5k2rzNMZ8ahebOMkdmFq1-nbZaLcp9Yjsa8'
+    localStorage.setItem('jwtToken', token)
+  })
+
   for (index; index < count; index++) {
     // cold navigation
     const flow = await startFlow(page, browserConfig)
+
     await flow.navigate(url, {
       stepName: 'Cold navigation',
       configContext: {
