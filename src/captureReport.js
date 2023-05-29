@@ -9,21 +9,25 @@ const browserConfig = {
     settings: {
       formFactor: 'desktop',
       screenEmulation: {
-        mobile: false,
-        width: 1340,
-        height: 1080,
-        deviceScaleFactor: 1.75,
-        disabled: false
+        disabled: true
       },
-      throttling: { cpuSlowdownMultiplier: 1, rttMs: 40, throughputKbps: 10240 }
+      throttlingMethod: 'provided'
     }
   }
 }
 
+const browserSize = { width: 1920, height: 1080 }
+
 export default async function captureReport (url, testVariant, count) {
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch({ headless: false, args: [`--window-size=${browserSize.width},${browserSize.height}`] })
   const incognito = await browser.createIncognitoBrowserContext()
   const page = await incognito.newPage()
+
+  await page.setViewport({
+    width: browserSize.width,
+    height: browserSize.height,
+    deviceScaleFactor: 1
+  })
 
   let index = 0
 
