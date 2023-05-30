@@ -17,6 +17,13 @@ const browserConfig = {
 }
 const browserSize = { width: 1920, height: 1080 }
 
+async function * asyncGenerator (count) {
+  let i = 0
+  while (i < count) {
+    yield i++
+  }
+}
+
 export default async function captureReport (url, testVariant, count) {
   const browser = await puppeteer.launch({ headless: false, args: [`--window-size=${browserSize.width},${browserSize.height}`] })
   const incognito = await browser.createIncognitoBrowserContext()
@@ -30,9 +37,7 @@ export default async function captureReport (url, testVariant, count) {
     await fs.promises.mkdir(dirToSave, { recursive: true })
   }
 
-  let index = 0
-
-  for (index; index < count; index++) {
+  for await (const index of asyncGenerator(count)) {
     // cold navigation
     const flow = await startFlow(page, browserConfig)
     await navigate(flow, url, 'Cold navigation', false)
