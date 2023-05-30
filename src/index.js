@@ -3,8 +3,7 @@ import { calculateMetrics } from './saveResults.js'
 
 async function generateReports (version, count) {
   await captureReport('http://localhost:4200', version, count)
-
-  calculateMetrics(version)
+  await calculateMetrics(version)
 }
 
-generateReports('pwa_home_one_browser', 5)
+generateReports('metrics_test', 2)
