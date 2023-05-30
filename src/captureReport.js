@@ -15,7 +15,6 @@ const browserConfig = {
     }
   }
 }
-
 const browserSize = { width: 1920, height: 1080 }
 
 export default async function captureReport (url, testVariant, count) {
@@ -33,6 +32,7 @@ export default async function captureReport (url, testVariant, count) {
 
   for (index; index < count; index++) {
     // cold navigation
+
     const flow = await startFlow(page, browserConfig)
     await flow.navigate(url, {
       stepName: 'Cold navigation',
@@ -41,12 +41,43 @@ export default async function captureReport (url, testVariant, count) {
       }
     })
 
+    const performanceTiming = JSON.parse(
+      await page.evaluate(() => {
+        return JSON.stringify(window.performance.getEntriesByType('navigation'))
+      })
+    )
+
+    const coldLoad = extractDataFromPerformanceNavigationTiming(
+      performanceTiming[0],
+      'domContentLoadedEventEnd',
+      'loadEventEnd'
+    )
+
     await flow.navigate(url, {
       stepName: 'Warm navigation',
       configContext: {
         settingsOverrides: { disableStorageReset: true }
       }
     })
+
+    const performanceTimingWarm = JSON.parse(
+      await page.evaluate(() => {
+        return JSON.stringify(window.performance.getEntriesByType('navigation'))
+      })
+    )
+
+    const warmLoad = extractDataFromPerformanceNavigationTiming(
+      performanceTimingWarm[0],
+      'domContentLoadedEventEnd',
+      'loadEventEnd'
+    )
+
+    const otherMetrics = {
+      'cold-load': { ...coldLoad },
+      'warm-load': { ...warmLoad }
+    }
+
+    console.log('otherMetrics :>> ', otherMetrics)
 
     const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
 
@@ -59,8 +90,19 @@ export default async function captureReport (url, testVariant, count) {
     fs.writeFileSync(htmlReportName, await flow.generateReport())
     fs.writeFileSync(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
 
-    saveResultsInJson(testVariant, index)
+    saveResultsInJson(testVariant, otherMetrics, index)
   }
 
   await browser.close()
+}
+
+const extractDataFromPerformanceNavigationTiming = (timing, ...dataNames) => {
+  const navigationStart = timing.startTime
+
+  const extractedData = {}
+  dataNames.forEach(name => {
+    extractedData[name] = timing[name] - navigationStart
+  })
+
+  return extractedData
 }
