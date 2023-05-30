@@ -22,55 +22,19 @@ export default async function captureReport (url, testVariant, count) {
   const incognito = await browser.createIncognitoBrowserContext()
   const page = await incognito.newPage()
 
-  await page.setViewport({
-    width: browserSize.width,
-    height: browserSize.height,
-    deviceScaleFactor: 1
-  })
+  await page.setViewport(browserSize)
 
   let index = 0
 
   for (index; index < count; index++) {
     // cold navigation
-
     const flow = await startFlow(page, browserConfig)
-    await flow.navigate(url, {
-      stepName: 'Cold navigation',
-      configContext: {
-        settingsOverrides: { disableStorageReset: false }
-      }
-    })
+    await navigateWithTiming(flow, url, 'Cold navigation', false)
+    const coldLoad = await getPerformanceTimingData(page)
 
-    const performanceTiming = JSON.parse(
-      await page.evaluate(() => {
-        return JSON.stringify(window.performance.getEntriesByType('navigation'))
-      })
-    )
-
-    const coldLoad = extractDataFromPerformanceNavigationTiming(
-      performanceTiming[0],
-      'domContentLoadedEventEnd',
-      'loadEventEnd'
-    )
-
-    await flow.navigate(url, {
-      stepName: 'Warm navigation',
-      configContext: {
-        settingsOverrides: { disableStorageReset: true }
-      }
-    })
-
-    const performanceTimingWarm = JSON.parse(
-      await page.evaluate(() => {
-        return JSON.stringify(window.performance.getEntriesByType('navigation'))
-      })
-    )
-
-    const warmLoad = extractDataFromPerformanceNavigationTiming(
-      performanceTimingWarm[0],
-      'domContentLoadedEventEnd',
-      'loadEventEnd'
-    )
+    // warm navigation
+    await navigateWithTiming(flow, url, 'Warm navigation', true)
+    const warmLoad = await getPerformanceTimingData(page)
 
     const otherMetrics = {
       'cold-load': { ...coldLoad },
@@ -79,25 +43,46 @@ export default async function captureReport (url, testVariant, count) {
     const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
 
     if (!fs.existsSync(dirToSave)) {
-      fs.mkdirSync(dirToSave, { recursive: true })
+      await fs.promises.mkdir(dirToSave, { recursive: true })
     }
 
-    const htmlReportName = dirToSave + testVariant + '_' + index + '.html'
-    const jsonReportName = dirToSave + testVariant + '_' + index + '.json'
-    fs.writeFileSync(htmlReportName, await flow.generateReport())
-    fs.writeFileSync(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
+    const htmlReportName = `${dirToSave}${testVariant}_${index}.html`
+    const jsonReportName = `${dirToSave}${testVariant}_${index}.json`
 
-    saveResultsInJson(testVariant, otherMetrics, index)
+    await Promise.all([
+      fs.promises.writeFile(htmlReportName, await flow.generateReport()),
+      fs.promises.writeFile(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
+    ])
+
+    await saveResultsInJson(testVariant, otherMetrics, index)
   }
 
   await browser.close()
 }
 
-const extractDataFromPerformanceNavigationTiming = (timing, ...dataNames) => {
+async function navigateWithTiming (flow, url, stepName, disableStorageReset) {
+  await flow.navigate(url, {
+    stepName,
+    configContext: {
+      settingsOverrides: { disableStorageReset }
+    }
+  })
+}
+
+async function getPerformanceTimingData (page) {
+  const performanceTiming = await page.evaluate(() => {
+    return JSON.stringify(window.performance.getEntriesByType('navigation'))
+  })
+
+  const timing = JSON.parse(performanceTiming)[0]
   const navigationStart = timing.startTime
 
+  return extractDataFromPerformanceNavigationTiming(timing, navigationStart, 'domContentLoadedEventEnd', 'loadEventEnd')
+}
+
+function extractDataFromPerformanceNavigationTiming (timing, navigationStart, ...dataNames) {
   const extractedData = {}
-  dataNames.forEach(name => {
+  dataNames.forEach((name) => {
     extractedData[name] = timing[name] - navigationStart
   })
 
