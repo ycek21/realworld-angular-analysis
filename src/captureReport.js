@@ -9,23 +9,33 @@ const browserConfig = {
     settings: {
       formFactor: 'desktop',
       screenEmulation: {
-        mobile: false,
-        width: 1340,
-        height: 1080,
-        deviceScaleFactor: 1.75,
-        disabled: false
+        disabled: true
       },
-      throttling: { cpuSlowdownMultiplier: 1, rttMs: 40, throughputKbps: 10240 }
+      throttlingMethod: 'provided'
     }
+  }
+}
+const browserSize = { width: 1920, height: 1080 }
+
+async function * asyncGenerator (count) {
+  let i = 0
+  while (i < count) {
+    yield i++
   }
 }
 
 export default async function captureReport (url, testVariant, count) {
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch({ headless: false, args: [`--window-size=${browserSize.width},${browserSize.height}`] })
   const incognito = await browser.createIncognitoBrowserContext()
   const page = await incognito.newPage()
 
-  let index = 0
+  await page.setViewport(browserSize)
+
+  const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
+
+  if (!fs.existsSync(dirToSave)) {
+    await fs.promises.mkdir(dirToSave, { recursive: true })
+  }
 
   await page.goto('http://localhost:4200/')
   await page.evaluate(() => {
@@ -33,37 +43,60 @@ export default async function captureReport (url, testVariant, count) {
     localStorage.setItem('jwtToken', token)
   })
 
-  for (index; index < count; index++) {
+  for await (const index of asyncGenerator(count)) {
     // cold navigation
     const flow = await startFlow(page, browserConfig)
+    await navigate(flow, url, 'Cold navigation', false)
+    const coldLoad = await getPerformanceTimingData(page)
 
-    await flow.navigate(url, {
-      stepName: 'Cold navigation',
-      configContext: {
-        settingsOverrides: { disableStorageReset: false }
-      }
-    })
+    // warm navigation
+    await navigate(flow, url, 'Warm navigation', true)
+    const warmLoad = await getPerformanceTimingData(page)
 
-    await flow.navigate(url, {
-      stepName: 'Warm navigation',
-      configContext: {
-        settingsOverrides: { disableStorageReset: true }
-      }
-    })
-
-    const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
-
-    if (!fs.existsSync(dirToSave)) {
-      fs.mkdirSync(dirToSave, { recursive: true })
+    const otherMetrics = {
+      'cold-load': { ...coldLoad },
+      'warm-load': { ...warmLoad }
     }
 
-    const htmlReportName = dirToSave + testVariant + '_' + index + '.html'
-    const jsonReportName = dirToSave + testVariant + '_' + index + '.json'
-    fs.writeFileSync(htmlReportName, await flow.generateReport())
-    fs.writeFileSync(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
+    const htmlReportName = `${dirToSave}${testVariant}_${index}.html`
+    const jsonReportName = `${dirToSave}${testVariant}_${index}.json`
 
-    saveResultsInJson(testVariant, index)
+    await Promise.all([
+      fs.promises.writeFile(htmlReportName, await flow.generateReport()),
+      fs.promises.writeFile(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
+    ])
+
+    await saveResultsInJson(testVariant, otherMetrics, index)
   }
 
   await browser.close()
+}
+
+async function navigate (flow, url, stepName, disableStorageReset) {
+  await flow.navigate(url, {
+    stepName,
+    configContext: {
+      settingsOverrides: { disableStorageReset }
+    }
+  })
+}
+
+async function getPerformanceTimingData (page) {
+  const performanceTiming = await page.evaluate(() => {
+    return JSON.stringify(window.performance.getEntriesByType('navigation'))
+  })
+
+  const timing = JSON.parse(performanceTiming)[0]
+  const navigationStart = timing.startTime
+
+  return extractDataFromPerformanceNavigationTiming(timing, navigationStart, 'domContentLoadedEventEnd', 'loadEventEnd')
+}
+
+function extractDataFromPerformanceNavigationTiming (timing, navigationStart, ...dataNames) {
+  const extractedData = {}
+  dataNames.forEach((name) => {
+    extractedData[name] = timing[name] - navigationStart
+  })
+
+  return extractedData
 }

@@ -2,16 +2,16 @@ import fs from 'fs'
 
 const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
 
-export async function saveResultsInJson (testVariant, index) {
+export async function saveResultsInJson (testVariant, otherMetrics, index) {
   const dirToSave = defaultDir + `/${testVariant}/`
   const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
-  const jsonRawData = fs.readFileSync(auditJsonFileLocation)
+  const jsonRawData = await fs.promises.readFile(auditJsonFileLocation)
   const json = JSON.parse(jsonRawData)
 
   const fileDir = dirToSave + `${testVariant}_aggregated_results.json`
 
   if (fs.existsSync(fileDir)) {
-    const aggregatedJsonRawData = fs.readFileSync(fileDir)
+    const aggregatedJsonRawData = await fs.promises.readFile(fileDir)
     const aggregatedJson = JSON.parse(aggregatedJsonRawData)
 
     aggregatedJson['cold-load']['first-contentful-paint'].push(json.steps[0].lhr.audits['first-contentful-paint'])
@@ -25,6 +25,9 @@ export async function saveResultsInJson (testVariant, index) {
     aggregatedJson['cold-load'].seo.push(json.steps[0].lhr.categories.seo.score)
     aggregatedJson['cold-load'].pwa.push(json.steps[0].lhr.categories.pwa.score)
 
+    aggregatedJson['cold-load']['dom-content-loaded'].push(otherMetrics['cold-load'].domContentLoadedEventEnd)
+    aggregatedJson['cold-load'].load.push(otherMetrics['cold-load'].loadEventEnd)
+
     aggregatedJson['warm-load']['first-contentful-paint'].push(json.steps[1].lhr.audits['first-contentful-paint'])
     aggregatedJson['warm-load']['largest-contentful-paint'].push(json.steps[1].lhr.audits['largest-contentful-paint'])
     aggregatedJson['warm-load']['speed-index'].push(json.steps[1].lhr.audits['speed-index'])
@@ -36,9 +39,12 @@ export async function saveResultsInJson (testVariant, index) {
     aggregatedJson['warm-load'].seo.push(json.steps[1].lhr.categories.seo.score)
     aggregatedJson['warm-load'].pwa.push(json.steps[1].lhr.categories.pwa.score)
 
-    saveAggregatedJson(fileDir, aggregatedJson)
+    aggregatedJson['warm-load']['dom-content-loaded'].push(otherMetrics['warm-load'].domContentLoadedEventEnd)
+    aggregatedJson['warm-load'].load.push(otherMetrics['warm-load'].loadEventEnd)
+
+    await saveAggregatedJson(fileDir, aggregatedJson)
   } else {
-    fs.mkdirSync(dirToSave, { recursive: true })
+    await fs.promises.mkdir(dirToSave, { recursive: true })
 
     const dataToSave = {
       'cold-load': {
@@ -51,7 +57,10 @@ export async function saveResultsInJson (testVariant, index) {
         accessibility: [json.steps[0].lhr.categories.accessibility.score],
         'best-practices': [json.steps[0].lhr.categories['best-practices'].score],
         seo: [json.steps[0].lhr.categories.seo.score],
-        pwa: [json.steps[0].lhr.categories.pwa.score]
+        pwa: [json.steps[0].lhr.categories.pwa.score],
+        'dom-content-loaded': [otherMetrics['cold-load'].domContentLoadedEventEnd],
+        load: [otherMetrics['cold-load'].loadEventEnd]
+
       },
       'warm-load': {
         'first-contentful-paint': [json.steps[1].lhr.audits['first-contentful-paint']],
@@ -63,17 +72,19 @@ export async function saveResultsInJson (testVariant, index) {
         accessibility: [json.steps[1].lhr.categories.accessibility.score],
         'best-practices': [json.steps[1].lhr.categories['best-practices'].score],
         seo: [json.steps[1].lhr.categories.seo.score],
-        pwa: [json.steps[1].lhr.categories.pwa.score]
+        pwa: [json.steps[1].lhr.categories.pwa.score],
+        'dom-content-loaded': [otherMetrics['warm-load'].domContentLoadedEventEnd],
+        load: [otherMetrics['warm-load'].loadEventEnd]
       }
 
     }
-    saveAggregatedJson(fileDir, dataToSave)
+    await saveAggregatedJson(fileDir, dataToSave)
   }
 }
 
 export async function calculateMetrics (testVariant) {
   const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_aggregated_results.json`
-  const jsonRawAggregatedData = fs.readFileSync(aggregatedFileLocation)
+  const jsonRawAggregatedData = await fs.promises.readFile(aggregatedFileLocation)
   const jsonToReadFrom = JSON.parse(jsonRawAggregatedData)
 
   const results = {
@@ -107,56 +118,76 @@ export async function calculateMetrics (testVariant) {
       accessibility: calculateAverage(jsonToReadFrom['cold-load'].accessibility),
       'best-practices': calculateAverage(jsonToReadFrom['cold-load']['best-practices']),
       seo: calculateAverage(jsonToReadFrom['cold-load'].seo),
-      pwa: calculateAverage(jsonToReadFrom['cold-load'].pwa)
+      pwa: calculateAverage(jsonToReadFrom['cold-load'].pwa),
+      'dom-content-loaded': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['dom-content-loaded']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['dom-content-loaded']),
+        numericUnit: 'millisecond'
+      },
+      load: {
+        average: calculateAverage(jsonToReadFrom['cold-load'].load),
+        median: calculateMedian(jsonToReadFrom['cold-load'].load),
+        numericUnit: 'millisecond'
+      }
     },
     'warm-load': {
       'first-contentful-paint': {
         average: calculateAverage(jsonToReadFrom['warm-load']['first-contentful-paint'].map(x => x.numericValue)),
         median: calculateMedian(jsonToReadFrom['warm-load']['first-contentful-paint'].map(x => x.numericValue)),
-        numericUnit: jsonToReadFrom['warm-load']['first-contentful-paint'][1].numericUnit
+        numericUnit: jsonToReadFrom['warm-load']['first-contentful-paint'][0].numericUnit
       },
       'largest-contentful-paint': {
         average: calculateAverage(jsonToReadFrom['warm-load']['largest-contentful-paint'].map(x => x.numericValue)),
         median: calculateMedian(jsonToReadFrom['warm-load']['largest-contentful-paint'].map(x => x.numericValue)),
-        numericUnit: jsonToReadFrom['warm-load']['largest-contentful-paint'][1].numericUnit
+        numericUnit: jsonToReadFrom['warm-load']['largest-contentful-paint'][0].numericUnit
       },
       'speed-index': {
         average: calculateAverage(jsonToReadFrom['warm-load']['speed-index'].map(x => x.numericValue)),
         median: calculateMedian(jsonToReadFrom['warm-load']['speed-index'].map(x => x.numericValue)),
-        numericUnit: jsonToReadFrom['warm-load']['speed-index'][1].numericUnit
+        numericUnit: jsonToReadFrom['warm-load']['speed-index'][0].numericUnit
       },
       'total-blocking-time': {
         average: calculateAverage(jsonToReadFrom['warm-load']['total-blocking-time'].map(x => x.numericValue)),
         median: calculateMedian(jsonToReadFrom['warm-load']['total-blocking-time'].map(x => x.numericValue)),
-        numericUnit: jsonToReadFrom['warm-load']['total-blocking-time'][1].numericUnit
+        numericUnit: jsonToReadFrom['warm-load']['total-blocking-time'][0].numericUnit
       },
       'cumulative-layout-shift': {
         average: calculateAverage(jsonToReadFrom['warm-load']['cumulative-layout-shift'].map(x => x.numericValue)),
         median: calculateMedian(jsonToReadFrom['warm-load']['cumulative-layout-shift'].map(x => x.numericValue)),
-        numericUnit: jsonToReadFrom['warm-load']['cumulative-layout-shift'][1].numericUnit
+        numericUnit: jsonToReadFrom['warm-load']['cumulative-layout-shift'][0].numericUnit
       },
       performance: calculateAverage(jsonToReadFrom['warm-load'].performance),
       accessibility: calculateAverage(jsonToReadFrom['warm-load'].accessibility),
       'best-practices': calculateAverage(jsonToReadFrom['warm-load']['best-practices']),
       seo: calculateAverage(jsonToReadFrom['warm-load'].seo),
-      pwa: calculateAverage(jsonToReadFrom['warm-load'].pwa)
+      pwa: calculateAverage(jsonToReadFrom['warm-load'].pwa),
+      'dom-content-loaded': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['dom-content-loaded']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['dom-content-loaded']),
+        numericUnit: 'millisecond'
+      },
+      load: {
+        average: calculateAverage(jsonToReadFrom['warm-load'].load),
+        median: calculateMedian(jsonToReadFrom['warm-load'].load),
+        numericUnit: 'millisecond'
+      }
     }
   }
 
-  saveCalculatedMetrics(testVariant, results)
+  await saveCalculatedMetrics(testVariant, results)
 }
 
-function saveAggregatedJson (dirToSave, aggregatedData) {
+async function saveAggregatedJson (dirToSave, aggregatedData) {
   const jsonToSave = JSON.stringify(aggregatedData)
 
-  fs.writeFileSync(dirToSave, jsonToSave)
+  await fs.promises.writeFile(dirToSave, jsonToSave)
 }
 
-function saveCalculatedMetrics (testVariant, results) {
+async function saveCalculatedMetrics (testVariant, results) {
   const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_calculated_results.json`
 
   const json = JSON.stringify(results)
-  fs.writeFileSync(aggregatedFileLocation, json)
+  await fs.promises.writeFile(aggregatedFileLocation, json)
 }
 
 function calculateAverage (metricArray) {
