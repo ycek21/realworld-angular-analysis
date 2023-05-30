@@ -76,9 +76,6 @@ export default async function captureReport (url, testVariant, count) {
       'cold-load': { ...coldLoad },
       'warm-load': { ...warmLoad }
     }
-
-    console.log('otherMetrics :>> ', otherMetrics)
-
     const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
 
     if (!fs.existsSync(dirToSave)) {

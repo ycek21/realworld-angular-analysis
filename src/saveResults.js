@@ -118,7 +118,17 @@ export async function calculateMetrics (testVariant) {
       accessibility: calculateAverage(jsonToReadFrom['cold-load'].accessibility),
       'best-practices': calculateAverage(jsonToReadFrom['cold-load']['best-practices']),
       seo: calculateAverage(jsonToReadFrom['cold-load'].seo),
-      pwa: calculateAverage(jsonToReadFrom['cold-load'].pwa)
+      pwa: calculateAverage(jsonToReadFrom['cold-load'].pwa),
+      'dom-content-loaded': {
+        average: calculateAverage(jsonToReadFrom['cold-load']['dom-content-loaded']),
+        median: calculateMedian(jsonToReadFrom['cold-load']['dom-content-loaded']),
+        numericUnit: 'millisecond'
+      },
+      load: {
+        average: calculateAverage(jsonToReadFrom['cold-load'].load),
+        median: calculateMedian(jsonToReadFrom['cold-load'].load),
+        numericUnit: 'millisecond'
+      }
     },
     'warm-load': {
       'first-contentful-paint': {
@@ -150,7 +160,17 @@ export async function calculateMetrics (testVariant) {
       accessibility: calculateAverage(jsonToReadFrom['warm-load'].accessibility),
       'best-practices': calculateAverage(jsonToReadFrom['warm-load']['best-practices']),
       seo: calculateAverage(jsonToReadFrom['warm-load'].seo),
-      pwa: calculateAverage(jsonToReadFrom['warm-load'].pwa)
+      pwa: calculateAverage(jsonToReadFrom['warm-load'].pwa),
+      'dom-content-loaded': {
+        average: calculateAverage(jsonToReadFrom['warm-load']['dom-content-loaded']),
+        median: calculateMedian(jsonToReadFrom['warm-load']['dom-content-loaded']),
+        numericUnit: 'millisecond'
+      },
+      load: {
+        average: calculateAverage(jsonToReadFrom['warm-load'].load),
+        median: calculateMedian(jsonToReadFrom['warm-load'].load),
+        numericUnit: 'millisecond'
+      }
     }
   }
 
