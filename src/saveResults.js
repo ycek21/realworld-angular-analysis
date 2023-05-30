@@ -5,13 +5,13 @@ const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa
 export async function saveResultsInJson (testVariant, otherMetrics, index) {
   const dirToSave = defaultDir + `/${testVariant}/`
   const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
-  const jsonRawData = fs.readFileSync(auditJsonFileLocation)
+  const jsonRawData = await fs.promises.readFile(auditJsonFileLocation)
   const json = JSON.parse(jsonRawData)
 
   const fileDir = dirToSave + `${testVariant}_aggregated_results.json`
 
   if (fs.existsSync(fileDir)) {
-    const aggregatedJsonRawData = fs.readFileSync(fileDir)
+    const aggregatedJsonRawData = await fs.promises.readFile(fileDir)
     const aggregatedJson = JSON.parse(aggregatedJsonRawData)
 
     aggregatedJson['cold-load']['first-contentful-paint'].push(json.steps[0].lhr.audits['first-contentful-paint'])
@@ -42,9 +42,9 @@ export async function saveResultsInJson (testVariant, otherMetrics, index) {
     aggregatedJson['warm-load']['dom-content-loaded'].push(otherMetrics['warm-load'].domContentLoadedEventEnd)
     aggregatedJson['warm-load'].load.push(otherMetrics['warm-load'].loadEventEnd)
 
-    saveAggregatedJson(fileDir, aggregatedJson)
+    await saveAggregatedJson(fileDir, aggregatedJson)
   } else {
-    fs.mkdirSync(dirToSave, { recursive: true })
+    await fs.promises.mkdir(dirToSave, { recursive: true })
 
     const dataToSave = {
       'cold-load': {
@@ -78,13 +78,13 @@ export async function saveResultsInJson (testVariant, otherMetrics, index) {
       }
 
     }
-    saveAggregatedJson(fileDir, dataToSave)
+    await saveAggregatedJson(fileDir, dataToSave)
   }
 }
 
 export async function calculateMetrics (testVariant) {
   const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_aggregated_results.json`
-  const jsonRawAggregatedData = fs.readFileSync(aggregatedFileLocation)
+  const jsonRawAggregatedData = await fs.promises.readFile(aggregatedFileLocation)
   const jsonToReadFrom = JSON.parse(jsonRawAggregatedData)
 
   const results = {
@@ -174,20 +174,20 @@ export async function calculateMetrics (testVariant) {
     }
   }
 
-  saveCalculatedMetrics(testVariant, results)
+  await saveCalculatedMetrics(testVariant, results)
 }
 
-function saveAggregatedJson (dirToSave, aggregatedData) {
+async function saveAggregatedJson (dirToSave, aggregatedData) {
   const jsonToSave = JSON.stringify(aggregatedData)
 
-  fs.writeFileSync(dirToSave, jsonToSave)
+  await fs.promises.writeFile(dirToSave, jsonToSave)
 }
 
-function saveCalculatedMetrics (testVariant, results) {
+async function saveCalculatedMetrics (testVariant, results) {
   const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_calculated_results.json`
 
   const json = JSON.stringify(results)
-  fs.writeFileSync(aggregatedFileLocation, json)
+  await fs.promises.writeFile(aggregatedFileLocation, json)
 }
 
 function calculateAverage (metricArray) {

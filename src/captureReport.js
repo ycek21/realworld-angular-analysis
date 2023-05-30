@@ -24,26 +24,27 @@ export default async function captureReport (url, testVariant, count) {
 
   await page.setViewport(browserSize)
 
+  const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
+
+  if (!fs.existsSync(dirToSave)) {
+    await fs.promises.mkdir(dirToSave, { recursive: true })
+  }
+
   let index = 0
 
   for (index; index < count; index++) {
     // cold navigation
     const flow = await startFlow(page, browserConfig)
-    await navigateWithTiming(flow, url, 'Cold navigation', false)
+    await navigate(flow, url, 'Cold navigation', false)
     const coldLoad = await getPerformanceTimingData(page)
 
     // warm navigation
-    await navigateWithTiming(flow, url, 'Warm navigation', true)
+    await navigate(flow, url, 'Warm navigation', true)
     const warmLoad = await getPerformanceTimingData(page)
 
     const otherMetrics = {
       'cold-load': { ...coldLoad },
       'warm-load': { ...warmLoad }
-    }
-    const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
-
-    if (!fs.existsSync(dirToSave)) {
-      await fs.promises.mkdir(dirToSave, { recursive: true })
     }
 
     const htmlReportName = `${dirToSave}${testVariant}_${index}.html`
@@ -60,7 +61,7 @@ export default async function captureReport (url, testVariant, count) {
   await browser.close()
 }
 
-async function navigateWithTiming (flow, url, stepName, disableStorageReset) {
+async function navigate (flow, url, stepName, disableStorageReset) {
   await flow.navigate(url, {
     stepName,
     configContext: {
