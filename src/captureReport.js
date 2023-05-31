@@ -31,7 +31,7 @@ export default async function captureReport (url, testVariant, count) {
 
   await page.setViewport(browserSize)
 
-  const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests/${testVariant}/`
+  const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${testVariant}/`
 
   if (!fs.existsSync(dirToSave)) {
     await fs.promises.mkdir(dirToSave, { recursive: true })

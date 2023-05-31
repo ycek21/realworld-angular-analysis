@@ -7,5 +7,5 @@ async function generateReports (version, count) {
   await calculateMetrics(version)
 }
 
-// generateReports('metrics_test_logged', 2)
-generateExcel('jacek')
+// generateReports('pwa_home', 5)
+generateExcel('home')

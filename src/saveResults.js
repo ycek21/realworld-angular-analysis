@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
+const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/'
 
 export async function saveResultsInJson (testVariant, otherMetrics, index) {
   const dirToSave = defaultDir + `/${testVariant}/`
