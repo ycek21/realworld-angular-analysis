@@ -1,9 +1,7 @@
 import fs from 'fs'
 
-const defaultDir = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse - automatic tests'
-
-export async function saveResultsInJson (testVariant, otherMetrics, index) {
-  const dirToSave = defaultDir + `/${testVariant}/`
+export async function saveResultsInJson (testVariant, otherMetrics, index, rootDirectory) {
+  const dirToSave = rootDirectory + `/${testVariant}/`
   const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
   const jsonRawData = await fs.promises.readFile(auditJsonFileLocation)
   const json = JSON.parse(jsonRawData)
@@ -82,8 +80,8 @@ export async function saveResultsInJson (testVariant, otherMetrics, index) {
   }
 }
 
-export async function calculateMetrics (testVariant) {
-  const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_aggregated_results.json`
+export async function calculateMetrics (testVariant, rootDirectory) {
+  const aggregatedFileLocation = rootDirectory + `/${testVariant}/${testVariant}_aggregated_results.json`
   const jsonRawAggregatedData = await fs.promises.readFile(aggregatedFileLocation)
   const jsonToReadFrom = JSON.parse(jsonRawAggregatedData)
 
@@ -174,7 +172,7 @@ export async function calculateMetrics (testVariant) {
     }
   }
 
-  await saveCalculatedMetrics(testVariant, results)
+  await saveCalculatedMetrics(testVariant, results, rootDirectory)
 }
 
 async function saveAggregatedJson (dirToSave, aggregatedData) {
@@ -183,8 +181,8 @@ async function saveAggregatedJson (dirToSave, aggregatedData) {
   await fs.promises.writeFile(dirToSave, jsonToSave)
 }
 
-async function saveCalculatedMetrics (testVariant, results) {
-  const aggregatedFileLocation = defaultDir + `/${testVariant}/${testVariant}_calculated_results.json`
+async function saveCalculatedMetrics (testVariant, results, rootDirectory) {
+  const aggregatedFileLocation = rootDirectory + `/${testVariant}/${testVariant}_calculated_results.json`
 
   const json = JSON.stringify(results)
   await fs.promises.writeFile(aggregatedFileLocation, json)

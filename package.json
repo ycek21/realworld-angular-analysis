@@ -22,7 +22,8 @@
   "dependencies": {
     "@types/node": "^20.2.3",
     "lighthouse": "^10.2.0",
-    "puppeteer": "^20.3.0"
+    "puppeteer": "^20.3.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   },
   "devDependencies": {
     "eslint": "^8.41.0",
