@@ -28,10 +28,8 @@ export default async function captureReport (url, testVariant, count, rootDirect
   const browser = await puppeteer.launch({ headless: false, args: [`--window-size=${browserSize.width},${browserSize.height}`] })
   const incognito = await browser.createIncognitoBrowserContext()
   const page = await incognito.newPage()
-
   await page.setViewport(browserSize)
 
-  // const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${testVariant}/`
   const dirToSave = rootDirectory + `/${testVariant}/`
 
   if (!fs.existsSync(dirToSave)) {
@@ -45,14 +43,21 @@ export default async function captureReport (url, testVariant, count, rootDirect
   })
 
   for await (const index of asyncGenerator(count)) {
-    // cold navigation
     const flow = await startFlow(page, browserConfig)
-    await navigate(flow, url, 'Cold navigation', false)
-    const coldLoad = await getPerformanceTimingData(page)
+
+    // cold navigation
+    let coldLoad
+    await Promise.all([
+      navigate(flow, url, 'Cold navigation', false),
+      coldLoad = await getPerformanceTimingData(page)
+    ])
 
     // warm navigation
-    await navigate(flow, url, 'Warm navigation', true)
-    const warmLoad = await getPerformanceTimingData(page)
+    let warmLoad
+    await Promise.all([
+      navigate(flow, url, 'Warm navigation', true),
+      warmLoad = await getPerformanceTimingData(page)
+    ])
 
     const otherMetrics = {
       'cold-load': { ...coldLoad },
