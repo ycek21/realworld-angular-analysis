@@ -24,14 +24,15 @@ async function * asyncGenerator (count) {
   }
 }
 
-export default async function captureReport (url, testVariant, count) {
+export default async function captureReport (url, testVariant, count, rootDirectory) {
   const browser = await puppeteer.launch({ headless: false, args: [`--window-size=${browserSize.width},${browserSize.height}`] })
   const incognito = await browser.createIncognitoBrowserContext()
   const page = await incognito.newPage()
 
   await page.setViewport(browserSize)
 
-  const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${testVariant}/`
+  // const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${testVariant}/`
+  const dirToSave = rootDirectory + `/${testVariant}/`
 
   if (!fs.existsSync(dirToSave)) {
     await fs.promises.mkdir(dirToSave, { recursive: true })
@@ -60,7 +61,7 @@ export default async function captureReport (url, testVariant, count) {
       fs.promises.writeFile(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
     ])
 
-    await saveResultsInJson(testVariant, otherMetrics, index)
+    await saveResultsInJson(testVariant, otherMetrics, index, rootDirectory)
   }
 
   await browser.close()

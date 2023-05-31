@@ -5,10 +5,10 @@ import * as cpexcel from 'xlsx/dist/cpexcel.full.mjs'
 
 // TODO: add SSR after fixing it
 const variants = [
-  'pwa',
-  'lazy_loading_disabled',
+  'initial_version',
   'preloading_disabled',
-  'initial_version'
+  'lazy_loading_disabled',
+  'pwa'
 ]
 
 function getCellForDataset (index) {
@@ -26,17 +26,23 @@ function getCellForDataset (index) {
   }
 }
 
-export default async function generateExcel (testedPage) {
+export default async function generateExcel (testedPage, rootDirectory) {
   XLSX.set_fs(fs)
   XLSX.stream.set_readable(Readable)
   XLSX.set_cptable(cpexcel)
-  // TODO: delete _one_browser after generating new sets of data
 
-  const workBook = XLSX.utils.book_new()
+  let workBook
+
+  if (fs.existsSync(rootDirectory + '/real_world_results.xlsx')) {
+    workBook = XLSX.readFile(rootDirectory + '/real_world_results.xlsx')
+  } else {
+    workBook = XLSX.utils.book_new()
+  }
+
   const workSheet = XLSX.utils.aoa_to_sheet([])
 
   variants.forEach(async (variant, index) => {
-    const fileDir = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${variant}_${testedPage}/${variant}_${testedPage}_calculated_results.json`
+    const fileDir = rootDirectory + `/${variant}_${testedPage}/${variant}_${testedPage}_calculated_results.json`
 
     const file = await fs.readFileSync(fileDir)
     const fileAsJson = JSON.parse(file)
@@ -74,13 +80,14 @@ export default async function generateExcel (testedPage) {
 
     if (index === 3) {
       // appending sheet to the workbook
-      XLSX.utils.book_append_sheet(workBook, workSheet, testedPage)
+    //   XLSX.utils.book_append_sheet(workBook, workSheet, testedPage)
 
       // setting columns width
       workSheet['!cols'] = [{ wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }]
+      XLSX.utils.book_append_sheet(workBook, workSheet, testedPage)
 
       XLSX.write(workBook, { bookType: 'xlsx', type: 'buffer' })
-      XLSX.writeFile(workBook, 'real_world_results.xlsx')
+      XLSX.writeFile(workBook, rootDirectory + '/real_world_results.xlsx')
     }
   }
   )
