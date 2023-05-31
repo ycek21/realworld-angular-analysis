@@ -26,10 +26,22 @@ function getCellForDataset (index) {
   }
 }
 
-export default async function generateExcel (testedPage, rootDirectory) {
+function setConfig () {
   XLSX.set_fs(fs)
   XLSX.stream.set_readable(Readable)
   XLSX.set_cptable(cpexcel)
+}
+
+function expandCells (workBook) {
+  const sheets = Object.values(workBook.Sheets)
+
+  sheets.forEach((sheet) => {
+    sheet['!cols'] = [{ wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }]
+  })
+}
+
+export default async function generateExcel (testedPage, rootDirectory) {
+  setConfig()
 
   let workBook
 
@@ -78,13 +90,9 @@ export default async function generateExcel (testedPage, rootDirectory) {
 
     ], { origin: getCellForDataset(index) })
 
-    if (index === 3) {
-      // appending sheet to the workbook
-    //   XLSX.utils.book_append_sheet(workBook, workSheet, testedPage)
-
-      // setting columns width
-      workSheet['!cols'] = [{ wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }, { wch: '20' }]
+    if (index === (variants.length - 1)) {
       XLSX.utils.book_append_sheet(workBook, workSheet, testedPage)
+      expandCells(workBook)
 
       XLSX.write(workBook, { bookType: 'xlsx', type: 'buffer' })
       XLSX.writeFile(workBook, rootDirectory + '/real_world_results.xlsx')
