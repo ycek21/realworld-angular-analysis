@@ -8,7 +8,8 @@ const variants = [
   'initial_version',
   'preloading_disabled',
   'lazy_loading_disabled',
-  'pwa'
+  'pwa',
+  'ssr'
 ]
 
 function getCellForDataset (index) {
