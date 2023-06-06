@@ -3,7 +3,6 @@ import * as fs from 'fs'
 import { Readable } from 'stream'
 import * as cpexcel from 'xlsx/dist/cpexcel.full.mjs'
 
-// TODO: add SSR after fixing it
 const variants = [
   'initial_version',
   'preloading_disabled',
@@ -41,7 +40,7 @@ function expandCells (workBook) {
   })
 }
 
-export default async function generateExcel (testedPage, rootDirectory) {
+export default function generateExcel (testedPage, rootDirectory) {
   setConfig()
 
   let workBook
@@ -54,10 +53,10 @@ export default async function generateExcel (testedPage, rootDirectory) {
 
   const workSheet = XLSX.utils.aoa_to_sheet([])
 
-  variants.forEach(async (variant, index) => {
+  variants.forEach((variant, index) => {
     const fileDir = rootDirectory + `/${variant}_${testedPage}/${variant}_${testedPage}_calculated_results.json`
 
-    const file = await fs.readFileSync(fileDir)
+    const file = fs.readFileSync(fileDir)
     const fileAsJson = JSON.parse(file)
 
     XLSX.utils.sheet_add_aoa(workSheet, [

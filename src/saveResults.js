@@ -1,11 +1,7 @@
 import fs from 'fs'
 
-export async function saveResultsInJson (testVariant, otherMetrics, index, rootDirectory) {
+export async function saveResultsInJson (testVariant, json, otherMetrics, rootDirectory) {
   const dirToSave = rootDirectory + `/${testVariant}/`
-  const auditJsonFileLocation = dirToSave + `${testVariant}_${index}.json`
-  const jsonRawData = await fs.promises.readFile(auditJsonFileLocation)
-  const json = JSON.parse(jsonRawData)
-
   const fileDir = dirToSave + `${testVariant}_aggregated_results.json`
 
   if (fs.existsSync(fileDir)) {

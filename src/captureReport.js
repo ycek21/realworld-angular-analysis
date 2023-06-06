@@ -31,7 +31,6 @@ export default async function captureReport (url, testVariant, count, rootDirect
 
   await page.setViewport(browserSize)
 
-  // const dirToSave = `X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_31_05_23/${testVariant}/`
   const dirToSave = rootDirectory + `/${testVariant}/`
 
   if (!fs.existsSync(dirToSave)) {
@@ -39,8 +38,9 @@ export default async function captureReport (url, testVariant, count, rootDirect
   }
 
   for await (const index of asyncGenerator(count)) {
-    // cold navigation
     const flow = await startFlow(page, browserConfig)
+    // cold navigation
+    // it's not possible to wrap this in Promise.all, because it throws error. Hence it needs to be executed sequentially
     await navigate(flow, url, 'Cold navigation', false)
     const coldLoad = await getPerformanceTimingData(page)
 
@@ -56,12 +56,16 @@ export default async function captureReport (url, testVariant, count, rootDirect
     const htmlReportName = `${dirToSave}${testVariant}_${index}.html`
     const jsonReportName = `${dirToSave}${testVariant}_${index}.json`
 
-    await Promise.all([
-      fs.promises.writeFile(htmlReportName, await flow.generateReport()),
-      fs.promises.writeFile(jsonReportName, JSON.stringify(await flow.createFlowResult(), null, 2))
+    const reports = await Promise.all([
+      flow.generateReport(),
+      flow.createFlowResult()
     ])
 
-    await saveResultsInJson(testVariant, otherMetrics, index, rootDirectory)
+    await Promise.all([
+      fs.promises.writeFile(htmlReportName, reports[0]),
+      fs.promises.writeFile(jsonReportName, JSON.stringify(reports[1], null, 2)),
+      saveResultsInJson(testVariant, reports[1], otherMetrics, rootDirectory)
+    ])
   }
 
   await browser.close()

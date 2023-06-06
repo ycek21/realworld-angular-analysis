@@ -3,16 +3,16 @@ import { calculateMetrics } from './saveResults.js'
 import generateExcel from './generateExcel.js'
 
 async function generateReports (version, count) {
-  const dirToSave = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_no_throttling'
-  await captureReport('http://localhost:4200', version, count, dirToSave)
+  const dirToSave = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_no_throttling_await_all'
+  await captureReport('http://localhost:4200/profile/Anah%20Bene%C5%A1ov%C3%A1', version, count, dirToSave)
   await calculateMetrics(version, dirToSave)
 }
 
 async function toExcel (version) {
-  const dirToSave = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_no_throttling'
+  const dirToSave = 'X:/iCloudDrive/Studies/Studia_magisterskie/Praca magisterksa/Lighthouse_no_throttling_await_all'
 
-  await generateExcel(version, dirToSave)
+  generateExcel(version, dirToSave)
 }
 
-// generateReports('pwa_home', 10)
-toExcel('home')
+generateReports('initial_version_profile', 10)
+// toExcel('home')
